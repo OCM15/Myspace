@@ -1,3 +1,5 @@
+Nimi Places 的整理思路 + Flow Launcher 的搜索 + Nexus 的视觉效果 + 你自己的 Edge 自动登录能力
+
 可以。考虑到你前面确定的方向，我建议给 GitHub Copilot 的需求文件不要写成“我要做一个桌面快捷方式工具”这么简单，而是把**产品目标、技术栈、核心功能、UI原则、Playwright/Edge Profile设计、配置方式**都明确下来。
 
 下面这份可以直接作为项目根目录的 `REQUIREMENTS.md` 使用。
