@@ -124,4 +124,126 @@ GitHub 官方也建议：简单、几乎所有任务都适用的规则放 custom
    ├─ system-design/
    └─ html-project-documentation/
 
-   
+--------------------------------------------------------------------------------------------------------
+.github/
+├── skills/
+│   ├── transaction-field-change/
+│   │   └── SKILL.md
+│   ├── database-change/
+│   │   └── SKILL.md
+│   └── api-change/
+│       └── SKILL.md
+│
+└── copilot/
+    └── coding-rules.md
+
+docs/
+├── domain/
+│   ├── transaction-types.md
+│   └── transaction-rules.md
+│
+├── architecture/
+│   └── system-overview.md
+│
+└── changes/
+    ├── CHG-2026-001.md
+    ├── CHG-2026-002.md
+    └── ...
+
+------------------------------
+                    本次需求
+                       │
+                       ▼
+              Change Request
+              “这次改什么”
+                       │
+                       ▼
+                Development Skill
+                “应该怎么改”
+                       │
+                       ▼
+              Repository / 业务规则
+              “系统现在是什么样”
+                       │
+                       ▼
+                  Copilot
+                       │
+          ┌────────────┼────────────┐
+          ▼            ▼            ▼
+       Impact        Code          Test
+       Analysis      Change       Verification
+
+    # .github/skills/transaction-field-change/SKILL.md
+        如何分析 Table
+        如何寻找 INSERT / UPDATE / SELECT
+        如何检查 Entity / DTO
+        如何检查 API
+        如何检查前端
+        如何处理 NULL / Default
+        如何处理既存数据
+        如何修改 Test
+        哪些东西禁止擅自修改
+        最后必须做什么检查
+
+# docs/changes/CHG-2026-001.md
+Table: TR_TRANSACTION
+
+增加字段：
+
+GUARANTEE_TYPE
+VARCHAR(2)
+NULL OK
+
+适用：
+- TradeTyp1
+- TradeTyp2
+- TradeTyp3
+
+业务规则：
+- XX交易必须输入
+- 普通XX可以 NULL
+
+“Copilot，请按照 transaction-field-change Skill 实现 CHG-2026-001。”
+
+docs/domain/transaction-types.md
+docs/domain/transaction-rules.md
+
+Phase 1: Analyze
+
+□ Read Change Request
+□ Read transaction definitions
+□ Check current DB schema
+□ Search all references to the table
+□ Search INSERT
+□ Search UPDATE
+□ Search SELECT
+□ Search Entity / DTO
+□ Search API
+□ Search UI
+□ Search validation
+□ Search test
+
+→ 输出 Impact Analysis
+→ 此阶段不得修改代码
+
+Phase 2: Implement
+
+□ DB
+□ Entity
+□ DTO
+□ SQL
+□ Service
+□ API
+□ UI
+□ Validation
+□ Test
+
+Phase 3: Verify
+
+□ TradeTyp1
+□ TradeTyp2
+□ TradeTyp3
+□ NULL
+□ Existing data
+□ Existing API
+□ Regression test
