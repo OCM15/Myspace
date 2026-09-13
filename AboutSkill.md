@@ -1,4 +1,10 @@
-Skill 的目录结构
+# Skill の整理と使い方
+
+## 1. Skill のディレクトリ構造
+
+以下のような構成が基本です。
+
+```text
 MyProject/
 ├─ .github/
 │  └─ skills/
@@ -13,12 +19,21 @@ MyProject/
 │
 ├─ src/
 └─ README.md
+```
 
-核心就是：
+核心は次のルールです。
+
+```text
 .github/skills/<skill-name>/SKILL.md
+```
 
-2. SKILL.md 里面写什么？
-例如你做一个 Java Swing 开发 Skill：
+---
+
+## 2. SKILL.md には何を書くのか
+
+たとえば Java Swing 開発向けの Skill を作るとします。
+
+```yaml
 ---
 name: java-swing-development
 description: Develop modern Java Swing desktop applications with clean architecture and modern UI patterns.
@@ -36,81 +51,112 @@ When developing Java Swing applications:
 6. Use consistent spacing and typography.
 7. Provide error handling for user operations.
 8. Add unit tests for business logic.
+```
 
-这里最重要的是：
-name:
-description:
+ここで最も重要なのは次の2つです。
 
-3. Copilot 是怎么使用 Skill 的？
-你：
-    帮我设计一个 Java Swing Dashboard
+- name
+- description
 
-             ↓
+これらは Skill の識別名と概要を定義します。
 
-Copilot 判断任务
+---
 
-             ↓
+## 3. Copilot は Skill をどう使うのか
 
-发现 java-swing-development Skill
-             ↓
+依頼例:
 
-加载 SKILL.md
-             ↓
+```text
+Java Swing のダッシュボードを設計して
+```
 
-按照 Skill 中的方法工作
+この流れで動作します。
 
-GitHub 官方说明也是：Copilot 会根据任务判断是否需要使用 Skill，然后把 SKILL.md 的内容加载到当前 Agent context 中。
+```text
+ユーザー依頼
+   ↓
+Copilot がタスクを判断
+   ↓
+java-swing-development Skill を発見
+   ↓
+SKILL.md を読み込む
+   ↓
+Skill のルールに従って作業する
+```
 
+GitHub 公式の説明にもある通り、Copilot はタスクに応じて Skill が必要かどうかを判断し、必要なら SKILL.md の内容を現在の Agent context に読み込みます。
 
-4. 怎么安装别人做好的 Skill？
+---
+
+## 4. 他人が作った Skill をどうインストールするか
+
+よく使うコマンドは次のとおりです。
+
+```bash
 gh skill search
 gh skill preview
 gh skill install
 gh skill update
+```
 
-例如：
-gh skill search documentation
+たとえば次のように使います。
 
+```bash
 gh skill search documentation
 gh skill install OWNER/REPOSITORY SKILL
+```
 
-    5. 也可以自己直接安装
+---
 
-例如别人给你一个：
+## 5. 自分で Skill を作る方法
 
+他人が提供している Skill が次のような構成だとします。
+
+```text
 python-testing/
 └── SKILL.md
+```
 
-你可以把它放到：
+これをプロジェクトに置けば、Copilot の Agent Mode で使えます。
 
-你的项目/
+```text
+あなたのプロジェクト/
 └── .github/
     └── skills/
         └── python-testing/
             └── SKILL.md
+```
 
-然后 Copilot Agent Mode 就可以使用。
+また、個人用の Skill をすべてのプロジェクトで使いたい場合は次のように置きます。
 
-个人 Skill 则可以放：
-
+```text
 ~/.copilot/skills/python-testing/SKILL.md
+```
 
-这样你所有项目都可以使用。
+そうすると、すべてのプロジェクトから利用できます。
 
-6. Skill 和 copilot-instructions.md 有什么区别？
+---
 
-这个非常值得你注意。
+## 6. Skill と copilot-instructions.md の違い
 
-	Instructions	Skill
-目的	全局/项目规则	专业工作能力
-是否每次都需要	通常需要	需要时才加载
-适合	编码规范、项目规则	Java开发、测试、DB迁移等
-内容	比较短	可以比较详细
-脚本/资源	通常没有	可以带
-自动选择	不强调	Copilot会根据任务选择
+これは非常に重要です。
 
-GitHub 官方也建议：简单、几乎所有任务都适用的规则放 custom instructions；复杂且只有特定任务需要的内容放 Skill。
+| 項目 | Instructions | Skill |
+| --- | --- | --- |
+| 目的 | グローバル / プロジェクト全体のルール | 専門的な作業能力 |
+| 毎回必要か | 通常は必要 | 必要なときだけ読み込まれる |
+| 向いている内容 | コーディング規約、プロジェクトルール | Java 開発、テスト、DB 変更など |
+| 内容量 | 比較的短い | 比較的詳しい |
+| スクリプト/リソース | 通常はなし | 付随することがある |
+| 自動選択 | そこまで重視されない | タスクに応じて選ばれる |
 
+GitHub 公式の推奨でも、ほぼすべての作業に共通するルールは custom instructions に置き、特定のタスクにだけ必要な内容は Skill として分離するのがよいとされています。
+
+---
+
+## 7. 推奨される Skill の例
+
+```text
 .github/
 ├─ copilot-instructions.md
 │
@@ -123,8 +169,13 @@ GitHub 官方也建议：简单、几乎所有任务都适用的规则放 custom
    ├─ excel-vba/
    ├─ system-design/
    └─ html-project-documentation/
+```
 
---------------------------------------------------------------------------------------------------------
+---
+
+## 8. 実務での Skill 構成例
+
+```text
 .github/
 ├── skills/
 │   ├── transaction-field-change/
@@ -136,7 +187,9 @@ GitHub 官方也建议：简单、几乎所有任务都适用的规则放 custom
 │
 └── copilot/
     └── coding-rules.md
+```
 
+```text
 docs/
 ├── domain/
 │   ├── transaction-types.md
@@ -149,21 +202,28 @@ docs/
     ├── CHG-2026-001.md
     ├── CHG-2026-002.md
     └── ...
+```
 
-------------------------------
+このような構成では、変更要求とその影響範囲を明確にしながら、Copilot に対して「どの Skill を使ってどこまで確認するべきか」を定義しやすくなります。
+
+---
+
+## 9. 変更要求と Skill の関係
+
+```text
                     本次需求
                        │
                        ▼
               Change Request
-              “这次改什么”
+              “この変更は何を変えるのか”
                        │
                        ▼
                 Development Skill
-                “应该怎么改”
+                “どのように変更すべきか”
                        │
                        ▼
-              Repository / 业务规则
-              “系统现在是什么样”
+              Repository / 業務ルール
+              “現在のシステムはどうなっているか”
                        │
                        ▼
                   Copilot
@@ -172,78 +232,130 @@ docs/
           ▼            ▼            ▼
        Impact        Code          Test
        Analysis      Change       Verification
+```
 
-    # .github/skills/transaction-field-change/SKILL.md
-        如何分析 Table
-        如何寻找 INSERT / UPDATE / SELECT
-        如何检查 Entity / DTO
-        如何检查 API
-        如何检查前端
-        如何处理 NULL / Default
-        如何处理既存数据
-        如何修改 Test
-        哪些东西禁止擅自修改
-        最后必须做什么检查
+たとえば、以下のような Skill を持たせると実務で使いやすくなります。
 
+```text
+.github/skills/transaction-field-change/SKILL.md
+```
+
+中身としては、次のような観点を明示します。
+
+- テーブルの分析方法
+- INSERT / UPDATE / SELECT の探索方法
+- Entity / DTO の確認方法
+- API の確認方法
+- フロントエンド確認方法
+- NULL / Default の扱い
+- 既存データへの影響確認
+- Test の修正方法
+- どこを勝手に変えてはいけないか
+- 最後に必ず確認する項目
+
+---
+
+## 10. 実例: 変更要求の流れ
+
+### 変更要求の例
+
+```md
 # docs/changes/CHG-2026-001.md
+
 Table: TR_TRANSACTION
 
-增加字段：
+増加項目:
 
 GUARANTEE_TYPE
 VARCHAR(2)
 NULL OK
 
-适用：
+対象:
 - TradeTyp1
 - TradeTyp2
 - TradeTyp3
 
-业务规则：
-- XX交易必须输入
-- 普通XX可以 NULL
+業務ルール:
+- XX 取引は必須入力
+- 通常の XX は NULL 可
+```
 
-“Copilot，请按照 transaction-field-change Skill 实现 CHG-2026-001。”
+依頼文の例:
 
-docs/domain/transaction-types.md
-docs/domain/transaction-rules.md
+```text
+Copilot、transaction-field-change Skill に従って CHG-2026-001 を実装してください。
+```
 
-Phase 1: Analyze
+関連する設計情報:
 
-□ Read Change Request
-□ Read transaction definitions
-□ Check current DB schema
-□ Search all references to the table
-□ Search INSERT
-□ Search UPDATE
-□ Search SELECT
-□ Search Entity / DTO
-□ Search API
-□ Search UI
-□ Search validation
-□ Search test
+- docs/domain/transaction-types.md
+- docs/domain/transaction-rules.md
 
-→ 输出 Impact Analysis
-→ 此阶段不得修改代码
+---
 
-Phase 2: Implement
+## 11. 実施手順の基本形
 
-□ DB
-□ Entity
-□ DTO
-□ SQL
-□ Service
-□ API
-□ UI
-□ Validation
-□ Test
+### Phase 1: Analyze
 
-Phase 3: Verify
+実施前に次を確認します。
 
-□ TradeTyp1
-□ TradeTyp2
-□ TradeTyp3
-□ NULL
-□ Existing data
-□ Existing API
-□ Regression test
+- 要求内容を読み取る
+- 取引定義を確認する
+- 現在の DB スキーマを確認する
+- 対象テーブルの参照箇所を全検索する
+- INSERT / UPDATE / SELECT を確認する
+- Entity / DTO を確認する
+- API を確認する
+- UI を確認する
+- バリデーションを確認する
+- テストを確認する
+
+> ここでは影響分析を出すことが目的であり、コード修正は行いません。
+
+### Phase 2: Implement
+
+- DB を修正する
+- Entity を修正する
+- DTO を修正する
+- SQL を修正する
+- Service を修正する
+- API を修正する
+- UI を修正する
+- バリデーションを修正する
+- Test を修正する
+
+### Phase 3: Verify
+
+- TradeTyp1
+- TradeTyp2
+- TradeTyp3
+- NULL
+- 既存データ
+- 既存 API
+- 回帰テスト
+
+---
+
+## 12. まとめ
+
+Skill は、単なるメモではなく、Copilot に「この種の作業では何を重視すべきか」を伝えるための専門知識セットです。
+
+重要なのは次の3点です。
+
+1. Skill は特定の作業領域に特化する
+2. ルールは構造化して書く
+3. タスクに応じて必要な Skill を選ばせる
+
+これにより、Copilot はより一貫した判断と実装を行えるようになります。
+
+---
+
+## 13. 実運用での重要ポイント
+
+- ルールが広すぎないようにする
+- 専門性の高い Skill を細かく分ける
+- 実案件に即した例を含める
+- 影響範囲と検証観点を明確にする
+- 変更前に分析を必須化する
+
+このように整理しておくと、Copilot への指示が安定し、変更ミスや見落としを減らせます。

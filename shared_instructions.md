@@ -5,6 +5,7 @@
 - Skills = 某一类任务的专业方法
 - Prompt = 当前这一次要做什么
 
+```text
 your-project/
 │
 ├─ AGENTS.md
@@ -34,9 +35,9 @@ your-project/
    ├─ requirements/
    ├─ database/
    └─ design/
+```
 
-1. copilot-instructions.md
-
+## 1. copilot-instructions.md
 
 # Project AI Instructions
 
@@ -139,7 +140,8 @@ Before reporting completion:
 5. Report unresolved issues or assumptions.
 6. Summarize the files/components changed.
 
-2. AGENTS.md
+## 2. AGENTS.md
+
 # AGENTS.md
 
 ## Role
@@ -239,8 +241,10 @@ The final response should contain:
 Use Japanese for the final report unless the user requests another language.
 
 
-3. SKILL.md
-database-change/SKILL.md
+## 3. SKILL.md
+
+### database-change/SKILL.md
+
 # Database Change Skill
 
 ## Purpose
@@ -389,15 +393,17 @@ The implementation report should include:
 * Remaining risks
 
 
-4. procedure.md
+## 4. procedure.md
 
-这里不要塞给 AI 一堆“原则”。
+ここ不要塞给 AI 一堆“原则”。
 
 它应该是非常具体的操作手册。
 
+```text
 database-change/
 ├─ SKILL.md
 ├─ procedure.md
+```
 └─ checklist.md
 
 # Database Change Procedure

@@ -1,49 +1,50 @@
-可以。下面我按**“可以直接交给 GitHub Copilot 作为开发规范”**的方式整理。考虑到你之前的方向是 **Java + Spring Boot + MyBatis + Oracle + Web App**，我会把权限模块设计成独立模块，后面业务画面不断增加也不用推倒重来。
+以下の内容を、元の意味を保ちながら日本語に翻訳し、Markdown の見出しや構造を適切に整えました。
 
-# Web App 权限控制设计规范
+# Web App 権限管理設計規約
 
 ## 1. 目的
 
-本系统采用 RBAC（Role-Based Access Control）实现用户权限管理。
+本システムでは、RBAC（Role-Based Access Control）を用いてユーザー権限を管理します。
 
-权限控制需要支持：
+権限管理では、次をサポートする必要があります。
 
-* 用户管理
-* 用户组管理
-* 一个用户属于多个用户组
-* 用户组控制画面访问权限
-* 用户组控制按钮/功能权限
-* 后端 API 权限控制
-* 前端菜单、画面、按钮显示控制
-* 数据范围（Data Scope）控制
-* 权限缓存
-* 权限变更后缓存刷新
-* 权限相关单元测试及集成测试
+- ユーザー管理
+- ユーザーグループ管理
+- 1人のユーザーが複数のユーザーグループに所属できる
+- ユーザーグループによる画面アクセス権限の制御
+- ユーザーグループによるボタン／機能権限の制御
+- バックエンド API 権限制御
+- フロントエンドのメニュー、画面、ボタン表示制御
+- データ範囲（Data Scope）制御
+- 権限キャッシュ
+- 権限変更後のキャッシュ更新
+- 権限関連のユニットテストと統合テスト
 
-技术前提：
+技術前提:
 
-* Java
-* Spring Boot
-* Spring Security
-* MyBatis
-* Oracle
-* REST API
-* Web Frontend
+- Java
+- Spring Boot
+- Spring Security
+- MyBatis
+- Oracle
+- REST API
+- Web Frontend
 
 ---
 
-# 2. 总体权限模型
+## 2. 全体の権限モデル
 
-采用：
+採用する関係は次の通りです。
 
 User → Group → Permission → Resource
 
-同时支持：
+同時に次もサポートします。
 
 Permission → Data Scope
 
-整体关系：
+全体の関係は次のとおりです。
 
+```text
 User
 ↓
 User Group
@@ -55,18 +56,20 @@ Permission
 Screen / Function / API
 ↓
 Data Scope
+```
 
-例如：
+例:
 
 User: TANAKA
 
-所属 Group：
+所属グループ:
 
-* SALES
-* APPROVER
+- SALES
+- APPROVER
 
-权限：
+権限:
 
+```text
 SALES
 ├─ TRADE_VIEW
 ├─ TRADE_CREATE
@@ -75,14 +78,15 @@ SALES
 APPROVER
 ├─ TRADE_VIEW
 └─ TRADE_APPROVE
+```
 
-最终用户权限为所属所有 Group 权限的 UNION。
+最終的なユーザー権限は、所属する全グループの権限の UNION です。
 
 ---
 
-# 3. DB 表设计
+## 3. DB テーブル設計
 
-## 3.1 USER
+### 3.1 USER
 
 ```sql
 CREATE TABLE APP_USER (
@@ -97,7 +101,7 @@ CREATE TABLE APP_USER (
 );
 ```
 
-STATUS：
+STATUS:
 
 ```text
 ACTIVE
@@ -107,7 +111,7 @@ LOCKED
 
 ---
 
-# 3.2 USER_GROUP
+### 3.2 USER_GROUP
 
 ```sql
 CREATE TABLE USER_GROUP (
@@ -122,7 +126,7 @@ CREATE TABLE USER_GROUP (
 );
 ```
 
-例如：
+例:
 
 ```text
 ADMIN
@@ -134,9 +138,9 @@ VIEWER
 
 ---
 
-# 3.3 USER_GROUP_MEMBER
+### 3.3 USER_GROUP_MEMBER
 
-用户与 Group 为 N:N。
+ユーザーとグループは N:N 関係です。
 
 ```sql
 CREATE TABLE USER_GROUP_MEMBER (
@@ -160,9 +164,9 @@ CREATE TABLE USER_GROUP_MEMBER (
 
 ---
 
-# 3.4 SCREEN
+### 3.4 SCREEN
 
-定义系统画面。
+システム画面を定義します。
 
 ```sql
 CREATE TABLE APP_SCREEN (
@@ -176,7 +180,7 @@ CREATE TABLE APP_SCREEN (
 );
 ```
 
-例如：
+例:
 
 ```text
 TRADE
@@ -189,13 +193,13 @@ MASTER
  └─ GROUP_MAINTENANCE
 ```
 
-PARENT_CODE 用于构造菜单层级。
+PARENT_CODE はメニューレベル構造を作るために使用します。
 
 ---
 
-# 3.5 PERMISSION
+### 3.5 PERMISSION
 
-定义业务功能权限。
+業務機能権限を定義します。
 
 ```sql
 CREATE TABLE APP_PERMISSION (
@@ -203,11 +207,11 @@ CREATE TABLE APP_PERMISSION (
     PERMISSION_CODE  VARCHAR2(100) NOT NULL UNIQUE,
     PERMISSION_NAME  VARCHAR2(200) NOT NULL,
     DESCRIPTION      VARCHAR2(500),
-    STATUS            VARCHAR2(20) NOT NULL
+    STATUS           VARCHAR2(20) NOT NULL
 );
 ```
 
-例如：
+例:
 
 ```text
 TRADE_VIEW
@@ -218,11 +222,11 @@ TRADE_APPROVE
 TRADE_EXPORT
 ```
 
-不要把按钮 ID 作为权限 ID。
+ボタン ID を権限 ID にしてはいけません。
 
-例如：
+例:
 
-不推荐：
+推奨しない例:
 
 ```text
 BUTTON_001
@@ -230,7 +234,7 @@ BUTTON_002
 BUTTON_003
 ```
 
-推荐：
+推奨する例:
 
 ```text
 TRADE_CREATE
@@ -238,11 +242,11 @@ TRADE_UPDATE
 TRADE_APPROVE
 ```
 
-因为权限表达的是“业务能力”，而不是 UI 元素。
+理由は、権限は「業務上の能力」を表し、UI 要素そのものではないからです。
 
 ---
 
-# 3.6 GROUP_PERMISSION
+### 3.6 GROUP_PERMISSION
 
 ```sql
 CREATE TABLE GROUP_PERMISSION (
@@ -264,7 +268,7 @@ CREATE TABLE GROUP_PERMISSION (
 );
 ```
 
-例如：
+例:
 
 | Group    | Permission    |
 | -------- | ------------- |
@@ -276,9 +280,9 @@ CREATE TABLE GROUP_PERMISSION (
 
 ---
 
-# 3.7 SCREEN_PERMISSION
+### 3.7 SCREEN_PERMISSION
 
-建议增加这一张表，把“哪个权限对应哪个画面”明确记录下来。
+「どの権限がどの画面に対応するか」を明確に記録するため、次のテーブルを追加することを推奨します。
 
 ```sql
 CREATE TABLE SCREEN_PERMISSION (
@@ -290,7 +294,7 @@ CREATE TABLE SCREEN_PERMISSION (
 );
 ```
 
-例如：
+例:
 
 ```text
 TRADE_SEARCH
@@ -306,13 +310,13 @@ TRADE_APPROVAL
     └─ TRADE_APPROVE
 ```
 
-这样可以避免一个权限被错误地用于完全不相关的画面。
+これにより、1つの権限が全く無関係な画面に誤って使われることを防げます。
 
 ---
 
-# 3.8 DATA_SCOPE
+### 3.8 DATA_SCOPE
 
-如果系统以后存在部门、担当者、地区等数据范围控制，增加：
+将来、部門、担当者、地域などのデータ範囲制御が必要になる場合は、次を追加します。
 
 ```sql
 CREATE TABLE GROUP_DATA_SCOPE (
@@ -325,7 +329,7 @@ CREATE TABLE GROUP_DATA_SCOPE (
 );
 ```
 
-SCOPE_TYPE：
+SCOPE_TYPE:
 
 ```text
 OWN
@@ -333,7 +337,7 @@ DEPARTMENT
 ALL
 ```
 
-例如：
+例:
 
 ```text
 SALES
@@ -345,46 +349,44 @@ TRADE
 ALL
 ```
 
-这样：
-
-同样拥有：
+このようにすると、同一の権限を持っていても、
 
 ```text
 TRADE_VIEW
 ```
 
-的两个用户，可以看到不同的数据。
+を持つ2人でも、見られるデータが異なります。
 
 ---
 
-# 4. 权限层次
+## 4. 権限レベル
 
-权限分为三层。
+権限は3つの層に分けて考えます。
 
-## Layer 1：Screen Access
+### Layer 1: Screen Access
 
-控制：
+制御対象:
 
-> 用户是否可以访问画面。
+> ユーザーが画面にアクセスできるかどうか
 
-例如：
+例:
 
 ```text
 TRADE_APPROVAL + VIEW
 ```
 
-没有这个权限：
+この権限がない場合:
 
 ```text
-菜单不显示
-直接访问 URL → 403
+メニュー非表示
+URL 直接アクセス → 403
 ```
 
 ---
 
-## Layer 2：Function / Button Access
+### Layer 2: Function / Button Access
 
-例如：
+例:
 
 ```text
 TRADE_CREATE
@@ -394,7 +396,7 @@ TRADE_APPROVE
 TRADE_EXPORT
 ```
 
-对应：
+対応する UI:
 
 ```text
 [新規登録]
@@ -406,9 +408,9 @@ TRADE_EXPORT
 
 ---
 
-## Layer 3：Data Scope
+### Layer 3: Data Scope
 
-例如：
+例:
 
 ```text
 OWN
@@ -416,7 +418,7 @@ DEPARTMENT
 ALL
 ```
 
-最终权限判断：
+最終的な権限判定:
 
 ```text
 Can Access Screen?
@@ -428,15 +430,15 @@ Can Access This Data?
 
 ---
 
-# 5. API 设计
+## 5. API 設計
 
-## 5.1 当前用户权限
+### 5.1 現在のユーザー権限
 
 ```http
 GET /api/me
 ```
 
-返回：
+返却例:
 
 ```json
 {
@@ -455,17 +457,17 @@ GET /api/me
 }
 ```
 
-前端登录后取得权限。
+フロントエンドはログイン後にこの権限を取得します。
 
 ---
 
-# 5.2 当前用户菜单
+### 5.2 現在のユーザーメニュー
 
 ```http
 GET /api/me/menus
 ```
 
-返回：
+返却例:
 
 ```json
 [
@@ -484,13 +486,13 @@ GET /api/me/menus
 ]
 ```
 
-服务器只返回用户有权限访问的菜单。
+サーバーは、ユーザーがアクセス権を持つメニューのみを返却します。
 
-因此前端不需要自己计算菜单权限。
+したがって、フロントエンド側でメニュー権限を自前で計算する必要はありません。
 
 ---
 
-# 5.3 用户组权限查询
+### 5.3 ユーザーグループ権限の取得
 
 ```http
 GET /api/admin/groups/{groupId}/permissions
@@ -498,13 +500,13 @@ GET /api/admin/groups/{groupId}/permissions
 
 ---
 
-# 5.4 用户组权限更新
+### 5.4 ユーザーグループ権限の更新
 
 ```http
 PUT /api/admin/groups/{groupId}/permissions
 ```
 
-Request：
+Request 例:
 
 ```json
 {
@@ -516,11 +518,11 @@ Request：
 }
 ```
 
-更新完成后必须刷新该 Group 相关用户的权限缓存。
+更新後は、該当グループに所属するユーザーの権限キャッシュを必ず更新してください。
 
 ---
 
-# 5.5 用户所属 Group
+### 5.5 ユーザー所属グループの取得
 
 ```http
 GET /api/admin/users/{userId}/groups
@@ -528,13 +530,13 @@ GET /api/admin/users/{userId}/groups
 
 ---
 
-# 5.6 修改用户 Group
+### 5.6 ユーザーグループ変更
 
 ```http
 PUT /api/admin/users/{userId}/groups
 ```
 
-Request：
+Request 例:
 
 ```json
 {
@@ -545,13 +547,13 @@ Request：
 }
 ```
 
-修改后刷新该用户权限缓存。
+変更後は、そのユーザーの権限キャッシュを更新します。
 
 ---
 
-# 6. Java Annotation
+## 6. Java の Annotation
 
-建议定义：
+次のように定義することを推奨します。
 
 ```java
 @Target({ElementType.METHOD, ElementType.TYPE})
@@ -559,11 +561,10 @@ Request：
 public @interface RequirePermission {
 
     String value();
-
 }
 ```
 
-Controller：
+Controller の例:
 
 ```java
 @RequirePermission("TRADE_APPROVE")
@@ -575,15 +576,15 @@ public ResponseEntity<?> approve(
 }
 ```
 
-这样业务代码非常容易理解。
+これにより、業務コードが非常に分かりやすくなります。
 
 ---
 
-# 7. 推荐使用 Spring Security
+## 7. Spring Security の利用を推奨
 
-权限检查应该集中在 Spring Security。
+権限チェックは Spring Security に集約させるべきです。
 
-例如：
+例:
 
 ```java
 @PreAuthorize("hasAuthority('TRADE_APPROVE')")
@@ -595,23 +596,23 @@ public ResponseEntity<?> approve(
 }
 ```
 
-如果使用自定义 Annotation：
+カスタム Annotation を使う場合:
 
 ```java
 @RequirePermission("TRADE_APPROVE")
 ```
 
-由 AOP / Method Security 统一处理。
+AOP / Method Security で一元処理します。
 
-原则：
+原則:
 
-**Controller 不自己查询 DB 判断权限。**
+**Controller が自分で DB を参照して権限判定をしないこと。**
 
 ---
 
-# 8. PermissionService
+## 8. PermissionService
 
-定义统一接口：
+共通インターフェースを定義します。
 
 ```java
 public interface PermissionService {
@@ -637,13 +638,13 @@ public interface PermissionService {
 }
 ```
 
-业务代码统一通过这个 Service 获取权限。
+業務コードはこの Service を通じて権限を取得するように統一します。
 
 ---
 
-# 9. 权限缓存
+## 9. 権限キャッシュ
 
-每次 API 都查询：
+API ごとに次のテーブルを毎回参照すると、
 
 ```text
 USER
@@ -655,25 +656,25 @@ GROUP_PERMISSION
 PERMISSION
 ```
 
-会产生大量 DB Access。
+大量の DB アクセスが発生します。
 
-因此建议缓存。
+そのため、キャッシュを導入することを推奨します。
 
-## 推荐
+### 推奨方式
 
-如果单机：
+単一サーバーの場合:
 
 ```text
 Caffeine
 ```
 
-如果多台 Server：
+複数サーバーの場合:
 
 ```text
 Redis
 ```
 
-生产环境推荐：
+本番環境では、通常は次の構成を推奨します。
 
 ```text
 Spring Boot
@@ -685,15 +686,15 @@ Oracle
 
 ---
 
-# 10. Cache Key
+## 10. Cache Key
 
-例如：
+例:
 
 ```text
 permission:user:U001
 ```
 
-Value：
+Value:
 
 ```json
 [
@@ -704,7 +705,7 @@ Value：
 ]
 ```
 
-Data Scope：
+Data Scope:
 
 ```text
 scope:user:U001:TRADE
@@ -712,9 +713,9 @@ scope:user:U001:TRADE
 
 ---
 
-# 11. 权限读取流程
+## 11. 権限取得フロー
 
-第一次请求：
+初回アクセス時:
 
 ```text
 API
@@ -732,7 +733,7 @@ Redis
 Permission Check
 ```
 
-以后：
+以後:
 
 ```text
 API
@@ -746,23 +747,15 @@ Permission Check
 
 ---
 
-# 12. 权限变更后的 Cache Invalidation
+## 12. 権限変更後のキャッシュ無効化
 
-这是实现时非常重要的一点。
+これは実装時に非常に重要なポイントです。
 
-例如：
+例:
 
-管理员修改：
+管理者が `SALES` グループの権限を変更したとします。
 
-```text
-SALES
-```
-
-Group 的权限。
-
-不能只刷新管理员自己的 Cache。
-
-必须：
+単に管理者自身のキャッシュだけを更新してはなりません。必ず次を行います。
 
 ```text
 GROUP_PERMISSION changed
@@ -776,19 +769,19 @@ permission:user:U003
 ...
 ```
 
-用户下次访问时重新从 DB 加载。
+ユーザーが次にアクセスした時に、DB から再ロードされます。
 
 ---
 
-# 13. 前端权限控制
+## 13. フロントエンドの権限制御
 
-前端登录后：
+フロントエンドログイン後:
 
 ```http
 GET /api/me
 ```
 
-取得：
+次のような権限情報を取得します。
 
 ```json
 {
@@ -800,13 +793,13 @@ GET /api/me
 }
 ```
 
-定义：
+定義例:
 
 ```javascript
 hasPermission("TRADE_UPDATE")
 ```
 
-例如：
+使用例:
 
 ```javascript
 if (hasPermission("TRADE_UPDATE")) {
@@ -814,19 +807,19 @@ if (hasPermission("TRADE_UPDATE")) {
 }
 ```
 
-但必须明确：
+ただし、次を明確に理解しておく必要があります。
 
-**前端权限控制不是安全控制。**
+**フロントエンドの権限制御は安全制御ではありません。**
 
-前端：
+フロントエンドで行うのは:
 
 ```text
-隐藏按钮
+ボタンを非表示にする
 ```
 
-只是 UX。
+という UX 制御のみです。
 
-真正的安全控制：
+本当の安全制御は次です。
 
 ```text
 Backend API
@@ -838,44 +831,43 @@ Permission Check
 
 ---
 
-# 14. 推荐前端组件
+## 14. 推奨フロントエンドコンポーネント
 
-可以设计：
+次のような構成にできます。
 
-```text
+```jsx
 <Permission permission="TRADE_CREATE">
     <button>新規登録</button>
 </Permission>
 ```
 
-或者：
+または:
 
-```text
-<button
-    v-if="hasPermission('TRADE_CREATE')">
+```html
+<button v-if="hasPermission('TRADE_CREATE')">
     新規登録
 </button>
 ```
 
-具体写法根据 React / Vue / Angular 决定。
+具体的な実装方法は React / Vue / Angular に応じて決めます。
 
 ---
 
-# 15. 菜单控制
+## 15. メニュー制御
 
-不要在前端写：
+フロントエンドで次のように書かないでください。
 
 ```javascript
 if (user.group === "ADMIN")
 ```
 
-也不要：
+または
 
 ```javascript
 if (user.group === "SALES")
 ```
 
-应该根据 Permission：
+代わりに、次のような Permission ベースで制御してください。
 
 ```text
 TRADE_VIEW
@@ -883,9 +875,7 @@ TRADE_CREATE
 TRADE_APPROVE
 ```
 
-控制。
-
-这样以后增加 Group：
+これにより、将来次のようなグループが増えても、
 
 ```text
 SALES_MANAGER
@@ -893,19 +883,19 @@ OVERSEAS_SALES
 SPECIAL_APPROVER
 ```
 
-前端完全不需要修改。
+フロントエンド側をほぼ変更せずに対応できます。
 
 ---
 
-# 16. 403 处理
+## 16. 403 の扱い
 
-没有权限：
+権限がない場合:
 
 ```http
 HTTP 403 Forbidden
 ```
 
-返回：
+返却例:
 
 ```json
 {
@@ -914,37 +904,37 @@ HTTP 403 Forbidden
 }
 ```
 
-前端统一处理。
+フロントエンドでは共通処理でハンドリングします。
 
 ---
 
-# 17. 401 与 403
+## 17. 401 と 403 の区別
 
-必须区分：
+次の区別を明確にしてください。
 
 ```text
 401 Unauthorized
 ```
 
-表示：
+意味:
 
-> 没有登录 / Token 无效
+> ログインしていない / Token が無効
 
 ```text
 403 Forbidden
 ```
 
-表示：
+意味:
 
-> 已登录，但是没有权限。
+> ログイン済みだが権限がない
 
 ---
 
-# 18. 管理画面
+## 18. 管理画面
 
-建议至少提供：
+最低限、次の管理画面は用意することを推奨します。
 
-## 用户管理
+### ユーザー管理
 
 ```text
 User
@@ -954,9 +944,7 @@ User
  └─ Groups
 ```
 
----
-
-## Group 管理
+### グループ管理
 
 ```text
 Group
@@ -965,37 +953,35 @@ Group
  └─ Permissions
 ```
 
-权限画面建议采用 Tree / Checkbox：
+権限画面は Tree / Checkbox の形式にすると管理しやすくなります。
 
 ```text
-□ 交易
-   ☑ 交易查询
+□ 取引
+   ☑ 取引検索
       ☑ VIEW
 
-   ☑ 交易输入
+   ☑ 取引入力
       ☑ VIEW
       ☑ CREATE
       ☑ UPDATE
       ☐ DELETE
 
-   ☐ 交易承認
+   ☐ 取引承認
       ☐ VIEW
       ☐ APPROVE
 ```
 
-这样管理员非常容易理解。
+この形式だと、管理者が権限構成を理解しやすくなります。
 
 ---
 
-# 19. 推荐不要设置“Admin = 所有权限字符串”
-
-可以存在：
+## 19. 「Admin = すべての権限文字列」を設定しないことを推奨
 
 ```text
 ADMIN
 ```
 
-但不要在 Java 代码里大量写：
+のようなグループは存在してよいですが、Java コード内で大量に次のような分岐を書いてはいけません。
 
 ```java
 if (user.isAdmin()) {
@@ -1003,29 +989,27 @@ if (user.isAdmin()) {
 }
 ```
 
-更好的方法：
-
-ADMIN Group 拥有：
+より良い方法は、ADMIN グループに次の権限を持たせることです。
 
 ```text
-所有 Permission
+すべての Permission
 ```
 
-或者特殊的：
+または、特殊なグループを用意して、
 
 ```text
 SYSTEM_ADMIN
 ```
 
-最终仍然进入统一权限机制。
+のようにしても最終的には統一権限仕組みに入ります。
 
-这样可以避免系统里出现两套权限体系。
+これにより、権限体系が2重化されるのを防げます。
 
 ---
 
-# 20. 数据权限
+## 20. データ権限
 
-如果业务数据存在：
+業務データに次のような列がある場合:
 
 ```text
 COMPANY_CODE
@@ -1033,39 +1017,39 @@ DEPARTMENT_CODE
 USER_ID
 ```
 
-不要仅仅通过前端限制。
+フロントエンドでのみ制限してはいけません。
 
-例如：
+例:
 
 ```text
 SALES_USER
 DATA_SCOPE = DEPARTMENT
 ```
 
-SQL 应该最终产生类似：
+SQL は最終的に次のような条件を生成すべきです。
 
 ```sql
 WHERE DEPARTMENT_CODE = :currentDepartment
 ```
 
-而：
+一方、
 
 ```text
 MANAGER
 DATA_SCOPE = ALL
 ```
 
-则不增加 Department 条件。
+なら Department 条件は追加しません。
 
-数据权限必须在后端实现。
+データ権限は必ずバックエンド側で実装してください。
 
 ---
 
-# 21. 测试案例
+## 21. テストケース
 
-## 21.1 Screen Access
+### 21.1 Screen Access
 
-### Case 001
+#### Case 001
 
 ```text
 User: U001
@@ -1073,13 +1057,13 @@ Group: SALES
 Permission: TRADE_VIEW
 ```
 
-访问：
+アクセス先:
 
 ```text
 /trade/search
 ```
 
-Expected：
+期待結果:
 
 ```text
 200 OK
@@ -1087,21 +1071,21 @@ Expected：
 
 ---
 
-### Case 002
+#### Case 002
 
-没有：
+権限がない場合:
 
 ```text
 TRADE_VIEW
 ```
 
-访问：
+アクセス先:
 
 ```text
 /trade/search
 ```
 
-Expected：
+期待結果:
 
 ```text
 403
@@ -1109,16 +1093,16 @@ Expected：
 
 ---
 
-# 22. Button Permission Test
+## 22. Button Permission Test
 
-User：
+User:
 
 ```text
 TRADE_VIEW
 TRADE_CREATE
 ```
 
-画面：
+画面:
 
 ```text
 [新規登録]
@@ -1126,69 +1110,57 @@ TRADE_CREATE
 [削除]
 ```
 
-Expected：
+期待結果:
 
 ```text
-新規登録 → Display
-変更     → Hidden
-削除     → Hidden
+新規登録 → 表示
+変更     → 非表示
+削除     → 非表示
 ```
 
 ---
 
-# 23. API Security Test
+## 23. API Security Test
 
-即使前端隐藏：
-
-```text
-[承認]
-```
-
-用户仍然直接调用：
+フロントエンドでボタンを隠していても、ユーザーが直接次の API を呼び出す可能性があります。
 
 ```http
 POST /api/trade/123/approve
 ```
 
-如果没有：
-
-```text
-TRADE_APPROVE
-```
-
-Expected：
+もし `TRADE_APPROVE` 権限がない場合:
 
 ```text
 403 Forbidden
 ```
 
-这是必须测试的。
+これは必ずテストする必要があります。
 
 ---
 
-# 24. Multiple Group Test
+## 24. Multiple Group Test
 
-User：
+User:
 
 ```text
 SALES
 APPROVER
 ```
 
-SALES：
+SALES の権限:
 
 ```text
 TRADE_VIEW
 TRADE_CREATE
 ```
 
-APPROVER：
+APPROVER の権限:
 
 ```text
 TRADE_APPROVE
 ```
 
-Expected：
+期待結果:
 
 ```text
 TRADE_VIEW      = true
@@ -1196,8 +1168,21 @@ TRADE_CREATE    = true
 TRADE_APPROVE   = true
 ```
 
-权限取 UNION。
+権限は UNION で結合されます。
 
+---
+
+## 25. まとめ
+
+本設計の要点は、権限を「画面アクセス」「機能権限」「データ範囲」の3層で整理し、バックエンドで厳密に制御することです。
+
+- フロントエンドは UX 向けに表示を制御する
+- バックエンド API は Spring Security と PermissionService で制御する
+- 権限変更時はキャッシュを必ず無効化する
+- ユーザーは Group を通じて権限を保持し、権限の増減を柔軟に管理する
+- 多数のグループが存在しても、権限判断は一貫した仕組みで行う
+
+これにより、将来の画面や機能が増えても、権限体系を破壊せずに拡張できます。
 ---
 
 # 25. Cache Test
