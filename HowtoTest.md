@@ -10,6 +10,17 @@
 
 对于你这种 Devin + GitHub Copilot 把 Java 旧系统迁移到新框架 的项目，我最推荐采用 「旧系统基准测试（Golden Master）＋新旧并行比较＋普通回归测试」 三层方式。这个思路正是遗留系统迁移中常用的 Characterization / Golden Master Testing。
 
+### 先确定环境制约：Devin 不能访问 DB
+
+这个制约不会阻止测试，但需要调整职责边界：
+
+- Devin 不连接旧系统或新系统的 DB，不读取 DB 凭据，也不负责采集 DB 快照。
+- 由具备权限的开发者、QA 或受控 CI Job 在测试环境执行 DB 查询和测试用例。
+- 执行方只把脱敏后的 `before/after` 快照、API 响应和比较结果交给 Devin。
+- Devin 负责生成测试代码、比较 fixture、分析 diff 和生成报告；任何 DB 差异由有权限的人确认。
+
+因此，DB 验证应采用“外部采集、文件比较”的方式，而不是让 Devin 直接执行 SQL。
+
 ## 1. 核心思想：不要让 AI 自己判断“功能一样”
 最重要的一点：
 
@@ -47,7 +58,7 @@
 | L1 | Unit Test | 新代码本身是否正确 |
 | L2 | API/Service Test | Java业务逻辑是否一致 |
 | L3 | Old vs New Comparison | 核心：功能是否发生变化 |
-| L4 | DB/Data Test | 数据是否完全一致 |
+| L4 | DB/Data Test | 由有权限的执行方采集快照，再比较业务数据是否一致 |
 | L5 | E2E/UI Test | 用户实际操作是否一致 |
 其中：
 
@@ -164,7 +175,7 @@ After
 table A +1
 table B +1
 table C unchanged
-这样以后新系统使用 完全相同的 input。
+这样以后新系统使用完全相同的 input。由于 Devin 无法访问 DB，`old-db-before.json`、`old-db-after.json` 以及新系统对应的快照，应由有权限的执行方生成，并在交给 Devin 前完成脱敏。
 
 ## 6. DB比较尤其重要
 你这个系统的核心又是：
@@ -173,24 +184,23 @@ table C unchanged
 
 所以我建议不要只比较 HTTP Response。
 
-而应该：
+而应该由有权限的执行方完成：
 
-Old System
-    ↓
+Old System / New System
+  ↓
 DB Snapshot Before
-    ↓
+  ↓
 Execute
-    ↓
+  ↓
 DB Snapshot After
-新系统也是：
 
-New System
-    ↓
-DB Snapshot Before
-    ↓
-Execute
-    ↓
-DB Snapshot After
+然后只把脱敏后的快照文件交给 Devin 做比较：
+
+Devin
+  ↓
+Fixture Comparator
+  ↓
+DB Diff Report
 最后比较：
 
 Response
@@ -298,14 +308,21 @@ Transaction:
 
 1. Read FUNCTION-MATRIX
 2. Read test scenarios
-3. Execute legacy system
-4. Capture baseline
-5. Execute new system
-6. Capture output
+3. Generate test inputs and test code
+4. 由有权限的执行方执行 legacy system 并保存 baseline
+5. 由有权限的执行方执行 new system 并保存 output
+6. 将脱敏后的 response/DB fixture 放入测试目录
 7. Normalize configured dynamic fields
-8. Compare old/new
+8. Compare old/new fixture
 9. Generate diff report
 10. Generate JUnit regression tests
+
+禁止 Devin 执行以下操作：
+
+- 直接连接 DB 或运行 SQL
+- 请求、保存或猜测 DB 凭据
+- 把真实个人信息、账号或生产数据复制到 fixture
+- 把“无法访问 DB”当作 DB 等价性通过
 最终得到：
 
 ```text
@@ -340,7 +357,7 @@ Legacy-New Equivalence Test Framework
             ↓                   ↓
        Response Old        Response New
             ↓                   ↓
-       DB Snapshot Old     DB Snapshot New
+      DB Fixture Old      DB Fixture New
             │                   │
             └─────────┬─────────┘
                       ↓
